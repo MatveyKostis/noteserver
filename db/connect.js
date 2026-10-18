@@ -1,8 +1,8 @@
-// i'm not publishing my private url here
 import pg from "pg";
+import 'dotenv/config'
 
 const pool = new pg.Pool({
-    connectionString: "URL HERE"
+    connectionString: process.env.POSTGRESURL
 });
 
 

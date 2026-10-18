@@ -1,6 +1,4 @@
-import * as fs from "node:fs/promises";
 import express from "express"
-import {json} from "express";
 import cors from "cors";
 import pool from "./db/connect.js"
 
@@ -11,15 +9,15 @@ app.use(express.json());
 
 
 
-async function getData() {
-    const file = (await fs.readFile("./data.json")).toString()
-    const data = JSON.parse(file);
-    console.log(data)
-    return data
-}
-async function putData(data) {
-    await fs.writeFile("./data.json", JSON.stringify(data))
-}
+// async function getData() {
+//     const file = (await fs.readFile("./data.json")).toString()
+//     const data = JSON.parse(file);
+//     console.log(data)
+//     return data
+// }
+// async function putData(data) {
+//     await fs.writeFile("./data.json", JSON.stringify(data))
+// }
 
 app.use(cors())
 
