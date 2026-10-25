@@ -35,14 +35,16 @@ app.post('/signup', async (req, res, next) => {
         const result = await session.query(`
     INSERT INTO users (name, password) VALUES ($1, $2) RETURNING *
     `, [username, password])
+
+        session.release()
+        res.status(200).send({
+            "status": "success",
+            "message": "go_login"
+        })
     } catch (e) {
         next({status: 400, message: "idk_something"})
         return
     }
-    res.status(200).send({
-        "status": "success",
-        "message": "go_login"
-    })
     // const data = (await fs.readFile("./data.json")).toString()
     // const file = JSON.parse(data)
     // if (req.body.username.length >= 10) {
@@ -70,10 +72,12 @@ app.post("/auth", async (req, res, next) => {
         if (result.rows.length === 0) {
             throw new Error();
         }
+        session.release()
         res.status(200).send({
             status: "success",
             message: "login_success",
-            id: result.rows[0].id
+            id: result.rows[0].id,
+            name: result.rows[0].name
         })
     } catch (e) {
         next({status: 401, message: "smthing_wrong"})
@@ -92,9 +96,10 @@ app.post("/note", async (req, res, next) => {
         insert into notes (text, "user", topic) values ($1, $2, $3)
         `, [text, userid, topic])
         console.log(result)
+        session.release()
         res.status(200).send({
             status: "success",
-            message: "created"
+            message: "created",
         });
     } catch (e) {
         console.log(e)
@@ -111,6 +116,7 @@ app.get("/note", async (req, res, next) => {
             select * from notes where "user" = $1
         `, [user])
         res.json(result.rows)
+        session.release()
     } catch (e) {
         console.log(e)
         res.status(400).send({
