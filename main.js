@@ -126,6 +126,45 @@ app.get("/note", async (req, res, next) => {
     }
 })
 
+app.delete("/note", async (req, res, next) => {
+    const { id, noteId } = req.body
+    const session = await pool.connect()
+    try {
+
+        const result = await session.query(`
+            delete from notes where id = $1 and "user" = $2
+        `, [noteId, id])
+        session.release()
+        res.status(200).send({
+            status: "success",
+            message: "deleted"
+        })
+    } catch (e) {
+        session.release()
+        console.log(e)
+        next({status: 400, message: "no_deletion"})
+        }
+})
+
+app.patch("/note", async (req, res, next) => {
+    const {id, noteId, text, topic} = req.body
+    const session = await pool.connect()
+    try {
+        const result = await session.query(`
+            update notes set text = $1, topic = $2 where id = $3 and "user" = $4
+        `, [text, topic, noteId, id])
+        session.release()
+        res.status(200).send({
+            status: "success",
+            message: "updated"
+        })
+    } catch (e) {
+        session.release()
+        console.log(e)
+        next({status: 400, message: "no_update"})
+    }
+})
+
 app.use((req, res) => {
     res.status(404).send({
         "status": "err",
