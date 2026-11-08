@@ -1,25 +1,33 @@
 import express from "express"
 import cors from "cors";
 import pool from "./db/connect.js"
+import morgan from "morgan"
+import multer from "multer"
+import path from "path"
+import { fileURLToPath } from "url"
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "./images")
+    },
+    filename: (req, file, cb) => {
+        console.log(file)
+        const ext = file.originalname.substring(file.originalname.lastIndexOf('.'))
+        cb(null, "ayo_chill_" + Date.now() + ext)
+    }
+})
+
+const upload = multer({storage: storage})
 const app = express();
 const port = 3000;
 
 app.use(express.json());
-
-
-
-// async function getData() {
-//     const file = (await fs.readFile("./data.json")).toString()
-//     const data = JSON.parse(file);
-//     console.log(data)
-//     return data
-// }
-// async function putData(data) {
-//     await fs.writeFile("./data.json", JSON.stringify(data))
-// }
-
+app.use(morgan("common"))
 app.use(cors())
+app.use("/images", express.static(path.join(__dirname, "images")))
 
 app.get('/', (req, res) => {
     const {name} = req.query
@@ -88,13 +96,14 @@ app.post("/auth", async (req, res, next) => {
 })
 
 
-app.post("/note", async (req, res, next) => {
+app.post("/note", upload.single("poster"), async (req, res, next) => {
     const {text, userid, topic} = req.body
+    const posterName = req.file ? req.file.filename : null
     try {
         const session = await pool.connect()
         const result = await session.query(`
-        insert into notes (text, "user", topic) values ($1, $2, $3)
-        `, [text, userid, topic])
+        insert into notes (text, "user", topic, poster) values ($1, $2, $3, $4)
+        `, [text, userid, topic, posterName])
         console.log(result)
         session.release()
         res.status(200).send({
@@ -144,6 +153,10 @@ app.delete("/note", async (req, res, next) => {
         console.log(e)
         next({status: 400, message: "no_deletion"})
         }
+})
+
+app.post("/image", upload.single("poster"), async (req, res, next) => {
+    res.status(200).json(req.file.path);
 })
 
 app.patch("/note", async (req, res, next) => {
